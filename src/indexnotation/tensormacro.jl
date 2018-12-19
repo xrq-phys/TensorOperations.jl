@@ -221,12 +221,36 @@ tensorify(ex::Symbol, optdata = nothing) = esc(ex)
 tensorify(ex, optdata = nothing) = ex
 
 # expandconj: conjugate individual terms or factors instead of a whole expression
+function removetranspose(ex::Expr)
+    if ex.head == :call && ex.args[1] == :transpose
+        @assert length(ex.args) == 2
+        return Expr(:call, :adjoint, Expr(:call, :conj, removetranspose(ex.args[2])))
+    else
+        return Expr(ex.head, map(removetranspose, ex.args)...)
+    end
+end
+removetranspose(ex) = ex
+function makeadjoint(ex::Expr)
+    if ex.head == prime
+        @assert length(ex.args) == 1
+        return Expr(:call, :adjoint, makeadjoint(ex.args[1]))
+    elseif isgeneraltensor(ex) || isscalarexpr(ex)
+        return ex
+    else
+        return Expr(ex.head, map(makeadjoint, ex.args)...)
+    end
+end
+makeadjoint(ex) = ex
+
 function expandconj(ex::Expr)
     if isgeneraltensor(ex) || isscalarexpr(ex)
         return ex
     elseif ex.head == :call && ex.args[1] == :conj
         @assert length(ex.args) == 2
         return conjexpr(expandconj(ex.args[2]))
+    elseif ex.head == :call && ex.args[1] == :adjoint
+        @assert length(ex.args) == 2
+        return adjointexpr(expandconj(ex.args[2]))
     else
         return Expr(ex.head, map(expandconj, ex.args)...)
     end
@@ -249,6 +273,30 @@ end
 conjexpr(ex::Number) = conj(ex)
 conjexpr(ex::Symbol) = Expr(:call, :conj, ex)
 conjexpr(ex) = error("cannot conjugate $ex")
+
+function adjointexpr(ex::Expr)
+    if ex.head == :call && ex.args[1] == :adjoint
+        return ex.args[2]
+    elseif isgeneraltensor(ex) || isscalarexpr(ex)
+        return Expr(:call, :adjoint, ex)
+    elseif ex.head == :call && ex.args[1] == :*
+        return Expr(ex.head, ex.args[1], map(adjointexpr, ex.args[end:-1:2])...)
+    elseif ex.head == :call && (ex.args[1] == :+ || ex.args[1] == :-)
+        return Expr(ex.head, ex.args[1], map(adjointexpr, ex.args[2:end])...)
+    elseif ex.head == :call && ex.args[1] == :/
+        @assert length(ex.args) == 3
+        return Expr(:call,:\, adjointexpr(ex.args[3]), adjointexpr(ex.args[2]))
+    elseif ex.head == :call && ex.args[1] == :\
+        @assert length(ex.args) == 3
+        return Expr(:call,:/, adjointexpr(ex.args[3]), adjointexpr(ex.args[2]))
+    else
+        error("cannot compute adjoint expression: $ex")
+    end
+end
+adjointexpr(ex::Number) = adjoint(ex)
+adjointexpr(ex::Symbol) = Expr(:call, :adjoint, ex)
+adjointexpr(ex) = error("cannot take adjoint of $ex")
+
 
 # processcontractorder: convert multi-argument multiplication into tree of pairwise multiplication
 function processcontractorder(ex::Expr, optdata)
