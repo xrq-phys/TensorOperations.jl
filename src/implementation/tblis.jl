@@ -32,10 +32,10 @@ oind2eins(oindA::NTuple{NAo}, cindA::NTuple{NAc},
 end
 
 contract!(α, 
-          A::Array{T}, conjA::Symbol,
-          B::Array{T}, conjB::Symbol,
+          A::StridedArray{T}, conjA::Symbol,
+          B::StridedArray{T}, conjB::Symbol,
           β, 
-          C::Array{T}, 
+          C::StridedArray{T}, 
           oindA::IndexTuple, cindA::IndexTuple, 
           oindB::IndexTuple, cindB::IndexTuple,
           tindC::IndexTuple, syms::Union{Nothing, NTuple{3,Symbol}} = nothing) where{T<:Real} = begin
