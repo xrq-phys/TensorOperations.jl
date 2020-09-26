@@ -38,14 +38,12 @@ contract!(α,
           C::Array{T}, 
           oindA::IndexTuple, cindA::IndexTuple, 
           oindB::IndexTuple, cindB::IndexTuple,
-          tindC::IndexTuple, syms::Union{Nothing, NTuple{3,Symbol}} = nothing) where{T} = begin
-    Float64(α) ≈ 1.0 || throw(ArgumentError("α and β are not ready yet."))
-    Float64(β) ≈ 0.0 || throw(ArgumentError("α and β are not ready yet."))
+          tindC::IndexTuple, syms::Union{Nothing, NTuple{3,Symbol}} = nothing) where{T<:Real} = begin
 
     einA, einB, einC = oind2eins(oindA, cindA, 
                                  oindB, cindB, 
                                  tindC)
-    BliContractor.contract!(A, einA, B, einB, C, einC)
+    BliContractor.contract!(A, einA, B, einB, C, einC, α, β)
     C
 end
 
