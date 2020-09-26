@@ -1,5 +1,5 @@
 # Dispatch to TBLIS implementation.
-import BliContractor
+#
 
 oind2eins(oindA::NTuple{NAo}, cindA::NTuple{NAc},
           oindB::NTuple{NBo}, cindB::NTuple{NBc},

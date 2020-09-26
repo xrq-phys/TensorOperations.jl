@@ -7,6 +7,7 @@ using LinearAlgebra
 using LinearAlgebra: mul!, BLAS.BlasFloat
 using LRUCache
 using Requires
+using BliContractor
 
 # Exports
 #---------
@@ -51,7 +52,9 @@ include("indexnotation/indexordertree.jl")
 include("implementation/indices.jl")
 include("implementation/tensorcache.jl")
 include("implementation/stridedarray.jl")
-include("implementation/tblis.jl")
+if BliContractor.is_available()
+    include("implementation/tblis.jl")
+end
 include("implementation/diagonal.jl")
 include("implementation/sparsearray.jl")
 
