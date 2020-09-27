@@ -1,11 +1,13 @@
 # Dispatch to TBLIS implementation.
 #
+CReal = Union{Float32, Float64}
 
 oind2eins(oindA::NTuple{NAo}, cindA::NTuple{NAc},
           oindB::NTuple{NBo}, cindB::NTuple{NBc},
           tindC::NTuple{NCt}) where {NAo, NAc, NBo, NBc, NCt} = begin
-    NAo + NBo == NCt || throw(ArgumentError("Number of outer index not consistent."))
-    NAc == NBc || throw(ArgumentError("Number of contracted index not consistent."))
+    # Check contraction conssitency.
+    NAo + NBo == NCt || throw(IndexError("number of outer index not consistent."))
+    NAc == NBc || throw(IndexError("number of contracted index not consistent."))
 
     cPadding = 'a' - 'A'
     einA = zeros(Int8, NAo+NAc)
@@ -38,7 +40,17 @@ contract!(α,
           C::StridedArray{T}, 
           oindA::IndexTuple, cindA::IndexTuple, 
           oindB::IndexTuple, cindB::IndexTuple,
-          tindC::IndexTuple, syms::Union{Nothing, NTuple{3,Symbol}} = nothing) where{T<:Real} = begin
+          tindC::IndexTuple, syms::Union{Nothing, NTuple{3,Symbol}} = nothing) where{T<:CReal} = begin
+    # Check permutation consistency.
+    # This check is copied from stridedarray.jl
+    pA = (oindA...,cindA...)
+    (length(pA) == ndims(A) && isperm(pA)) ||
+        throw(IndexError("invalid permutation of length $(ndims(A)): $pA"))
+    pB = (oindB...,cindB...)
+    (length(pB) == ndims(B) && isperm(pB)) ||
+        throw(IndexError("invalid permutation of length $(ndims(B)): $pB"))
+    (length(tindC) == ndims(C) && isperm(tindC)) ||
+        throw(IndexError("invalid permutation of length $(ndims(C)): $tindC"))
 
     einA, einB, einC = oind2eins(oindA, cindA, 
                                  oindB, cindB, 
