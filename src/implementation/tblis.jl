@@ -1,6 +1,11 @@
 # Dispatch to TBLIS implementation.
 #
-CReal = Union{Float32, Float64}
+using BliContractor: Dual
+
+# TODO: Should find a smart way to support all `Dual`s.
+ContractableReal = Union{Float32, Float64, 
+                         Dual{<:Any, Float32},
+                         Dual{<:Any, Float64}}
 
 oind2eins(oindA::NTuple{NAo}, cindA::NTuple{NAc},
           oindB::NTuple{NBo}, cindB::NTuple{NBc},
@@ -40,7 +45,7 @@ contract!(α,
           C::StridedArray{T}, 
           oindA::IndexTuple, cindA::IndexTuple, 
           oindB::IndexTuple, cindB::IndexTuple,
-          tindC::IndexTuple, syms::Union{Nothing, NTuple{3,Symbol}} = nothing) where{T<:CReal} = begin
+          tindC::IndexTuple, syms::Union{Nothing, NTuple{3,Symbol}} = nothing) where{T<:ContractableReal} = begin
     # Check permutation consistency.
     # This check is copied from stridedarray.jl
     pA = (oindA...,cindA...)
